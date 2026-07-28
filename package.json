@@ -1,0 +1,34 @@
+{
+  "name": "quizmotion",
+  "version": "1.0.0",
+  "description": "Generate quiz videos (YouTube landscape & Shorts/Reels) from a CSV using Remotion",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "generate": "tsx scripts/generate.ts",
+    "tts": "tsx scripts/tts-prepare.ts",
+    "render:short": "remotion render src/index.ts QuizShort out/preview-short.mp4",
+    "render:landscape": "remotion render src/index.ts QuizLandscape out/preview-landscape.mp4",
+    "upgrade": "remotion upgrade",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.1",
+    "@remotion/bundler": "4.0.400",
+    "@remotion/cli": "4.0.400",
+    "@remotion/renderer": "4.0.400",
+    "csv-parse": "^5.6.0",
+    "music-metadata": "^10.9.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.400",
+    "zod": "3.22.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@types/react": "19.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

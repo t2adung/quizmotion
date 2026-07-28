@@ -1,0 +1,252 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { bundle } from "@remotion/bundler";
+import { renderMedia, selectComposition } from "@remotion/renderer";
+import {
+  filterQuestions,
+  listDifficulties,
+  listTopics,
+  parseQuiz,
+  topicFileId,
+  topicLabel,
+} from "../src/lib/csv";
+import { getProvider, prepareClips, runIdFor } from "../src/tts/index";
+import {
+  DIMENSIONS,
+  FPS,
+  type Format,
+  type Question,
+  type QuizProps,
+} from "../src/schema";
+
+const ROOT = path.resolve(fileURLToPath(import.meta.url), "../..");
+
+type Options = {
+  csv: string;
+  format: Format;
+  topic: string;
+  difficulty: number | null;
+  limit: number;
+  questionIndex: number; // for short: which question in the filtered set
+  tts: boolean;
+  provider: string;
+  readExplanation: boolean;
+  out: string | null;
+};
+
+async function main() {
+  const csvPath = argValue("csv") ?? path.join(ROOT, "data", "multichoice.csv");
+  const csvText = await readFile(csvPath, "utf8");
+  const all = parseQuiz(csvText);
+
+  const opts = hasFlags()
+    ? resolveFromFlags(all, csvPath)
+    : await promptOptions(all, csvPath);
+
+  const filtered = filterQuestions(all, {
+    topic: opts.topic,
+    difficulty: opts.difficulty ?? undefined,
+  });
+  if (filtered.length === 0) {
+    throw new Error("No questions match the selected topic/difficulty.");
+  }
+
+  const selected: Question[] =
+    opts.format === "short"
+      ? [filtered[Math.min(opts.questionIndex, filtered.length - 1)]]
+      : filtered.slice(0, opts.limit);
+
+  const label = topicLabel(opts.topic);
+  const props: QuizProps = {
+    questions: selected,
+    clips: [],
+    countdownSeconds: 5,
+    revealSeconds: 2.5,
+    explanationSeconds: 4,
+    title: "Quiz Time",
+    subtitle: label.full,
+  };
+
+  // --- Optional TTS narration ---
+  if (opts.tts) {
+    try {
+      console.log(`\n🔊 Generating narration (${opts.provider})…`);
+      const runId = runIdFor([
+        opts.provider,
+        opts.topic,
+        opts.difficulty ?? "all",
+        opts.format,
+        opts.readExplanation ? "exp" : "noexp",
+        selected.length,
+        selected[0]?.question ?? "",
+      ]);
+      props.clips = await prepareClips(selected, {
+        provider: getProvider(opts.provider),
+        readExplanation: opts.readExplanation,
+        fps: FPS,
+        publicDir: path.join(ROOT, "public"),
+        runId,
+      });
+    } catch (err) {
+      console.warn(
+        `⚠️  TTS failed (${(err as Error).message}). Falling back to no-audio timings.`,
+      );
+      props.clips = [];
+    }
+  }
+
+  // --- Render ---
+  const compId = opts.format === "short" ? "QuizShort" : "QuizLandscape";
+  const outFile =
+    opts.out ??
+    path.join(
+      ROOT,
+      "out",
+      `${topicFileId(opts.topic)}-${opts.format}${opts.difficulty ? `-d${opts.difficulty}` : ""}.mp4`,
+    );
+
+  console.log(`\n🎬 Bundling…`);
+  const serveUrl = await bundle({
+    entryPoint: path.join(ROOT, "src", "index.ts"),
+    publicDir: path.join(ROOT, "public"),
+  });
+
+  const composition = await selectComposition({
+    serveUrl,
+    id: compId,
+    inputProps: props,
+  });
+
+  const { width, height } = DIMENSIONS[opts.format];
+  console.log(
+    `🎥 Rendering ${compId} (${width}×${height}, ${composition.durationInFrames} frames) → ${path.relative(ROOT, outFile)}`,
+  );
+
+  await renderMedia({
+    composition,
+    serveUrl,
+    codec: "h264",
+    outputLocation: outFile,
+    inputProps: props,
+    onProgress: ({ progress }) =>
+      process.stdout.write(`  ${Math.round(progress * 100)}%\r`),
+  });
+
+  console.log(`\n✅ Done: ${outFile}`);
+  process.exit(0);
+}
+
+// ---------- Flag (non-interactive) mode ----------
+
+function hasFlags(): boolean {
+  return process.argv.includes("--format") || process.argv.includes("--topic");
+}
+
+function resolveFromFlags(all: Question[], csvPath: string): Options {
+  const topics = listTopics(all);
+  const topicArg = argValue("topic") ?? topics[0];
+  // Allow either the full slug or a 0-based index into the topic list.
+  const topic = /^\d+$/.test(topicArg) ? topics[Number(topicArg)] : topicArg;
+  const diffArg = argValue("difficulty");
+  return {
+    csv: csvPath,
+    format: (argValue("format") as Format) ?? "short",
+    topic,
+    difficulty: diffArg && diffArg !== "all" ? Number(diffArg) : null,
+    limit: Number(argValue("limit") ?? 10),
+    questionIndex: Number(argValue("question") ?? 0),
+    tts: process.argv.includes("--tts"),
+    provider: argValue("provider") ?? "google",
+    readExplanation: !process.argv.includes("--no-explanation"),
+    out: argValue("out"),
+  };
+}
+
+function argValue(name: string): string | null {
+  const idx = process.argv.indexOf(`--${name}`);
+  if (idx >= 0 && idx + 1 < process.argv.length) return process.argv[idx + 1];
+  return null;
+}
+
+// ---------- Interactive mode ----------
+
+async function promptOptions(all: Question[], csvPath: string): Promise<Options> {
+  const { select, number, confirm } = await import("@inquirer/prompts");
+
+  const format = (await select({
+    message: "Định dạng video?",
+    choices: [
+      { name: "📱 Short / Reels (dọc 9:16, 1 câu)", value: "short" },
+      { name: "🖥️  YouTube ngang (16:9, nhiều câu)", value: "landscape" },
+    ],
+  })) as Format;
+
+  const topics = listTopics(all);
+  const topic = await select({
+    message: "Chọn chủ đề (topic_slug)?",
+    choices: topics.map((t) => ({ name: topicLabel(t).full, value: t })),
+    pageSize: 12,
+  });
+
+  const diffs = listDifficulties(filterQuestions(all, { topic }));
+  const difficulty = (await select({
+    message: "Độ khó?",
+    choices: [
+      { name: "Tất cả", value: null },
+      ...diffs.map((d) => ({ name: `Mức ${d}`, value: d })),
+    ],
+  })) as number | null;
+
+  const pool = filterQuestions(all, {
+    topic,
+    difficulty: difficulty ?? undefined,
+  });
+
+  let limit = 10;
+  let questionIndex = 0;
+  if (format === "landscape") {
+    limit =
+      (await number({
+        message: `Số câu tối đa (nhóm có ${pool.length} câu)?`,
+        default: Math.min(10, pool.length),
+        min: 1,
+      })) ?? Math.min(10, pool.length);
+  } else {
+    questionIndex = (await select({
+      message: "Chọn câu hỏi cho video Short?",
+      pageSize: 10,
+      choices: pool.map((q, i) => ({
+        name: `${i + 1}. ${q.question.slice(0, 70)}`,
+        value: i,
+      })),
+    })) as number;
+  }
+
+  const tts = await confirm({ message: "Lồng tiếng (TTS)?", default: true });
+  let readExplanation = true;
+  if (tts) {
+    readExplanation = await confirm({
+      message: "Đọc cả phần giải thích?",
+      default: true,
+    });
+  }
+
+  return {
+    csv: csvPath,
+    format,
+    topic,
+    difficulty,
+    limit,
+    questionIndex,
+    tts,
+    provider: "google",
+    readExplanation,
+    out: null,
+  };
+}
+
+main().catch((err) => {
+  console.error("\n❌", err);
+  process.exit(1);
+});
