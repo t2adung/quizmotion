@@ -7,6 +7,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { Background } from "./Background";
+import { Logo } from "./Logo";
 import { theme, fonts } from "../lib/theme";
 
 export const IntroCard: React.FC<{
@@ -26,6 +27,14 @@ export const IntroCard: React.FC<{
       <AbsoluteFill
         style={{ alignItems: "center", justifyContent: "center", padding: width * 0.06 }}
       >
+        <Logo
+          size={big * 1.6}
+          style={{
+            marginBottom: big * 0.4,
+            transform: `scale(${scale})`,
+            filter: "drop-shadow(0 10px 0 rgba(0,0,0,0.25))",
+          }}
+        />
         <div
           style={{
             transform: `scale(${scale}) rotate(${wobble}deg)`,
