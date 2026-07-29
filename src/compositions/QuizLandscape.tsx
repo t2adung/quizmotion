@@ -25,6 +25,10 @@ export const QuizLandscape: React.FC<QuizProps> = (props) => {
             subtitle={props.subtitle}
             count={props.questions.length}
             backgroundSrc={props.backgrounds[0]}
+            coverSrc={props.cover ?? undefined}
+            book={props.book}
+            subject={props.subject}
+            lesson={props.lesson}
           />
         </Series.Sequence>
 
@@ -40,6 +44,7 @@ export const QuizLandscape: React.FC<QuizProps> = (props) => {
         <Series.Sequence durationInFrames={outroFrames}>
           <OutroCard
             backgroundSrc={props.backgrounds[props.backgrounds.length - 1]}
+            coverSrc={props.cover ?? undefined}
           />
         </Series.Sequence>
       </Series>

@@ -1,21 +1,35 @@
 import React from "react";
 import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Background } from "./Background";
+import { BookCover } from "./IntroCard";
 import { theme, fonts } from "../lib/theme";
 
-export const OutroCard: React.FC<{ message?: string; backgroundSrc?: string }> = ({
-  message = "Cảm ơn đã xem!",
-  backgroundSrc,
-}) => {
+export const OutroCard: React.FC<{
+  message?: string;
+  backgroundSrc?: string;
+  coverSrc?: string;
+}> = ({ message = "Cảm ơn đã xem!", backgroundSrc, coverSrc }) => {
   const frame = useCurrentFrame();
   const { fps, width } = useVideoConfig();
   const scale = spring({ frame, fps, config: { damping: 11, stiffness: 100 } });
-  const big = width * 0.08;
+  // Slightly smaller content + a ~5% safe-area margin on every side.
+  const big = width * 0.07;
+  const pad = width * 0.11;
 
   return (
     <AbsoluteFill>
       <Background seed={3} imageSrc={backgroundSrc} />
-      <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", gap: big * 0.5 }}>
+      <AbsoluteFill
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          gap: big * 0.5,
+          padding: pad,
+        }}
+      >
+        {coverSrc ? (
+          <BookCover src={coverSrc} scale={scale} height={width * 0.22} tilt={0} />
+        ) : null}
         <div
           style={{
             transform: `scale(${scale})`,

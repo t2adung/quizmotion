@@ -46,8 +46,14 @@ export const QuizPropsSchema = z.object({
   explanationSeconds: z.number().min(1).max(30).default(4),
   /** Human-friendly title for the intro card (landscape). */
   title: z.string().default("Quiz Time"),
-  /** Subtitle / topic label for the intro card. */
+  /** Subtitle / topic label for the intro card (fallback if book/subject/lesson empty). */
   subtitle: z.string().default(""),
+  /** Optional book name, e.g. "Tin học 6 — Kết nối tri thức". */
+  book: z.string().default(""),
+  /** Optional subject / chủ đề (proper Vietnamese), e.g. "Chủ đề 5: Ứng dụng tin học". */
+  subject: z.string().default(""),
+  /** Optional lesson title / tựa bài (proper Vietnamese), e.g. "Bài 10 — Sơ đồ tư duy". */
+  lesson: z.string().default(""),
   /**
    * Optional custom background images (staticFile-relative paths, e.g.
    * "backgrounds/space.jpg"). When non-empty, scenes use these instead of the
@@ -55,6 +61,12 @@ export const QuizPropsSchema = z.object({
    * The CLI shuffles this list randomly on every run.
    */
   backgrounds: z.array(z.string()).default([]),
+  /**
+   * Optional book-cover image (staticFile-relative, e.g. "covers/book.png").
+   * When set, it is shown on the intro card (landscape) and, smaller, on the
+   * outro. Leave null to hide it.
+   */
+  cover: z.string().nullable().default(null),
 });
 export type QuizProps = z.infer<typeof QuizPropsSchema>;
 

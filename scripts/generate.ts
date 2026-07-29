@@ -35,18 +35,35 @@ type Options = {
   out: string | null;
   /** Background spec: "auto" (use folder, shuffled), "none", or comma list. */
   bg: string;
+  /** Optional book cover: filename in public/covers, a covers/ path, or "". */
+  cover: string;
+  /** Optional intro-slide text (proper Vietnamese). */
+  book: string;
+  subject: string;
+  lesson: string;
 };
 
 const IMG_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg"]);
 
-/** List image files in public/backgrounds (basenames). */
-async function listBackgroundFiles(publicDir: string): Promise<string[]> {
+/** List image files (basenames) in a public/<sub> folder. */
+async function listImageFiles(publicDir: string, sub: string): Promise<string[]> {
   try {
-    const files = await readdir(path.join(publicDir, "backgrounds"));
+    const files = await readdir(path.join(publicDir, sub));
     return files.filter((f) => IMG_EXT.has(path.extname(f).toLowerCase())).sort();
   } catch {
     return [];
   }
+}
+
+const listBackgroundFiles = (publicDir: string) => listImageFiles(publicDir, "backgrounds");
+const listCoverFiles = (publicDir: string) => listImageFiles(publicDir, "covers");
+
+/** Resolve a cover spec into a staticFile-relative path ("covers/x.png") or null. */
+function resolveCover(spec: string): string | null {
+  const s = spec.trim();
+  if (!s) return null;
+  if (s.includes("/")) return s.replace(/^public\//, "");
+  return `covers/${s}`;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -108,6 +125,9 @@ async function main() {
   }
 
   const label = topicLabel(opts.topic);
+  const cover = resolveCover(opts.cover);
+  if (cover) console.log(`📘 Bìa sách: ${cover}`);
+
   const props: QuizProps = {
     questions: selected,
     clips: [],
@@ -117,6 +137,10 @@ async function main() {
     title: "Quiz Time",
     subtitle: label.full,
     backgrounds,
+    cover,
+    book: opts.book,
+    subject: opts.subject,
+    lesson: opts.lesson,
   };
 
   // --- Optional TTS narration ---
@@ -212,6 +236,10 @@ function resolveFromFlags(all: Question[], csvPath: string): Options {
     readExplanation: !process.argv.includes("--no-explanation"),
     out: argValue("out"),
     bg: argValue("bg") ?? "auto",
+    cover: argValue("cover") ?? "",
+    book: argValue("book") ?? "",
+    subject: argValue("subject") ?? "",
+    lesson: argValue("lesson") ?? "",
   };
 }
 
@@ -224,7 +252,7 @@ function argValue(name: string): string | null {
 // ---------- Interactive mode ----------
 
 async function promptOptions(all: Question[], csvPath: string): Promise<Options> {
-  const { select, number, confirm } = await import("@inquirer/prompts");
+  const { select, number, confirm, input } = await import("@inquirer/prompts");
 
   const format = (await select({
     message: "Định dạng video?",
@@ -295,6 +323,24 @@ async function promptOptions(all: Question[], csvPath: string): Promise<Options>
     bg = useBg ? "auto" : "none";
   }
 
+  // Slide đầu (intro): thông tin tuỳ chọn.
+  const book = await input({ message: "Tên sách (optional, Enter để bỏ qua):", default: "" });
+  const subject = await input({ message: "Chủ đề (optional):", default: "" });
+  const lesson = await input({ message: "Tựa bài (optional):", default: "" });
+
+  // Book cover (public/covers).
+  const coverFiles = await listCoverFiles(path.join(ROOT, "public"));
+  let cover = "";
+  if (coverFiles.length > 0) {
+    cover = (await select({
+      message: "Bìa sách (optional)?",
+      choices: [
+        { name: "— Không dùng —", value: "" },
+        ...coverFiles.map((f) => ({ name: f, value: f })),
+      ],
+    })) as string;
+  }
+
   return {
     csv: csvPath,
     format,
@@ -307,6 +353,10 @@ async function promptOptions(all: Question[], csvPath: string): Promise<Options>
     readExplanation,
     out: null,
     bg,
+    cover,
+    book,
+    subject,
+    lesson,
   };
 }
 

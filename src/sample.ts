@@ -77,4 +77,8 @@ export const sampleProps = (count: number): QuizProps => ({
   title: "Quiz Time",
   subtitle: "Chủ đề 1 · Bài 1 — Thông tin và dữ liệu",
   backgrounds: [],
+  cover: null,
+  book: "Tin học 6 — Kết nối tri thức",
+  subject: "Chủ đề 1: Máy tính và cộng đồng",
+  lesson: "Bài 1 — Thông tin và dữ liệu",
 });

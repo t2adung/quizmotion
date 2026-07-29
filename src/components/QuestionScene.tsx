@@ -44,9 +44,10 @@ export const QuestionScene: React.FC<{
 
   const phase: "idle" | "reveal" = frame >= revealStart ? "reveal" : "idle";
 
-  const qFont = base * (portrait ? 0.05 : 0.062);
-  const optFont = base * (portrait ? 0.038 : 0.05);
-  const ringSize = base * (portrait ? 0.26 : 0.3);
+  // Slightly smaller content so the extra safe-area padding doesn't crowd.
+  const qFont = base * (portrait ? 0.046 : 0.057);
+  const optFont = base * (portrait ? 0.035 : 0.046);
+  const ringSize = base * (portrait ? 0.24 : 0.28);
 
   // Question card entrance.
   const qPop = spring({ frame, fps, config: { damping: 13, stiffness: 110 } });
@@ -73,10 +74,11 @@ export const QuestionScene: React.FC<{
 
       <AbsoluteFill
         style={{
-          padding: base * 0.06,
+          // ~5% larger safe-area margin than before so nothing hugs the edges.
+          padding: `${base * 0.09}px ${base * 0.08}px`,
           display: "flex",
           flexDirection: "column",
-          gap: base * 0.035,
+          gap: base * 0.03,
         }}
       >
         {/* Question number badge */}

@@ -74,6 +74,10 @@ Tham số:
 | `--no-explanation` | (khi bật TTS) không đọc phần giải thích |
 | `--provider` | nhà cung cấp TTS (mặc định `google`) |
 | `--bg` | ảnh nền: `auto` (mặc định, ngẫu nhiên) \| `none` \| danh sách `"a.jpg,b.png"` |
+| `--cover` | (slide đầu) tên file bìa sách trong `public/covers/` |
+| `--book` | (slide đầu) tên sách, vd `"Tin học 6 — Kết nối tri thức"` |
+| `--subject` | (slide đầu) chủ đề, vd `"Chủ đề 5: Ứng dụng tin học"` |
+| `--lesson` | (slide đầu) tựa bài, vd `"Bài 10 — Sơ đồ tư duy"` |
 | `--csv` | đường dẫn CSV khác |
 | `--out` | đường dẫn file MP4 đầu ra |
 
@@ -98,6 +102,26 @@ Mặc định nền được **vẽ bằng code** (pop-art tím/vàng động). 
 
 Công cụ **không tự chèn logo** — bạn có thể gắn sẵn logo vào ảnh nền. Điều khiển
 qua cờ `--bg auto|none|"a.jpg,b.png"`. Thư mục trống → dùng nền pop-art mặc định.
+
+## Slide đầu (intro) 📘
+
+Bạn có thể thêm thông tin (tất cả **optional**) hiển thị ở slide đầu của video ngang:
+
+- **Bìa sách**: bỏ ảnh vào `public/covers/` (ảnh dọc ~2:3), chọn bằng `--cover <tên-file>`.
+- **Tên sách / Chủ đề / Tựa bài**: `--book`, `--subject`, `--lesson` (nhập tiếng Việt có
+  dấu — hữu ích vì `topic_slug` không có dấu). Ở CLI tương tác sẽ được hỏi trực tiếp.
+
+Ví dụ:
+
+```bash
+npm run generate -- --format landscape --topic 9 --limit 10 \
+  --cover book.png \
+  --book "Tin học 6 — Kết nối tri thức" \
+  --subject "Chủ đề 5: Ứng dụng tin học" \
+  --lesson "Bài 10 — Sơ đồ tư duy"
+```
+
+Bỏ trống thì slide đầu tự dùng nhãn suy ra từ `topic_slug`.
 
 ## Lồng tiếng (TTS)
 
@@ -124,6 +148,7 @@ TTS được thiết kế **pluggable**. Để thêm giọng neural (vd Microsof
 data/multichoice.csv        Dữ liệu quiz
 public/fonts/               Font self-hosted (Vietnamese)
 public/backgrounds/         Ảnh nền tuỳ chọn của bạn (ngẫu nhiên mỗi lần gen)
+public/covers/              Bìa sách tuỳ chọn (hiển thị ở slide đầu)
 public/audio/               Audio TTS sinh ra (gitignored)
 src/
   schema.ts                 Kiểu dữ liệu + props (zod)
