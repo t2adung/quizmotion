@@ -44,10 +44,17 @@ export const QuestionScene: React.FC<{
 
   const phase: "idle" | "reveal" = frame >= revealStart ? "reveal" : "idle";
 
-  // Slightly smaller content so the extra safe-area padding doesn't crowd.
-  const qFont = base * (portrait ? 0.046 : 0.057);
-  const optFont = base * (portrait ? 0.035 : 0.046);
-  const ringSize = base * (portrait ? 0.24 : 0.28);
+  // Slightly smaller content so it fits above the countdown/logo band.
+  const qFont = base * (portrait ? 0.046 : 0.05);
+  const optFont = base * (portrait ? 0.035 : 0.04);
+  const ringSize = base * (portrait ? 0.22 : 0.17);
+
+  // Layout zones: question + options live in the top ~2/3; the countdown and
+  // explanation live below without overlapping the content, and a safe strip at
+  // the very bottom is reserved for a logo baked into the background. Landscape
+  // needs a slightly taller content band because the 2×2 grid is wider.
+  const CONTENT_FRAC = portrait ? 2 / 3 : 0.72;
+  const logoSafe = height * (portrait ? 0.1 : 0.05);
 
   // Question card entrance.
   const qPop = spring({ frame, fps, config: { damping: 13, stiffness: 110 } });
@@ -72,10 +79,15 @@ export const QuestionScene: React.FC<{
         </Sequence>
       ) : null}
 
-      <AbsoluteFill
+      {/* Content zone: top 2/3 of the frame */}
+      <div
         style={{
-          // ~5% larger safe-area margin than before so nothing hugs the edges.
-          padding: `${base * 0.09}px ${base * 0.08}px`,
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: `${CONTENT_FRAC * 100}%`,
+          padding: `${base * 0.07}px ${base * 0.08}px 0`,
           display: "flex",
           flexDirection: "column",
           gap: base * 0.03,
@@ -142,26 +154,32 @@ export const QuestionScene: React.FC<{
             />
           ))}
         </div>
-      </AbsoluteFill>
+      </div>
 
-      {/* Countdown ring (only while counting) */}
+      {/* Countdown ring — centered in the bottom third, above the logo strip */}
       <Sequence from={countdownStart} durationInFrames={t.countdownFrames}>
-        <AbsoluteFill
+        <div
           style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: `${CONTENT_FRAC * 100}%`,
+            bottom: logoSafe,
+            display: "flex",
             alignItems: "center",
-            justifyContent: "flex-end",
-            paddingBottom: base * 0.05,
+            justifyContent: "center",
           }}
         >
           <CountdownRing startFrame={0} frames={t.countdownFrames} size={ringSize} />
-        </AbsoluteFill>
+        </div>
       </Sequence>
 
-      {/* Explanation panel */}
+      {/* Explanation panel — anchored above the bottom logo strip */}
       <ExplanationPanel
         text={q.explanation_vi}
         startFrame={explanationStart}
         base={base}
+        bottomOffset={logoSafe}
       />
     </AbsoluteFill>
   );
@@ -171,7 +189,8 @@ const ExplanationPanel: React.FC<{
   text: string;
   startFrame: number;
   base: number;
-}> = ({ text, startFrame, base }) => {
+  bottomOffset: number;
+}> = ({ text, startFrame, base, bottomOffset }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   if (frame < startFrame) return null;
@@ -184,11 +203,16 @@ const ExplanationPanel: React.FC<{
   const y = interpolate(enter, [0, 1], [80, 0]);
 
   return (
-    <AbsoluteFill
+    <div
       style={{
-        alignItems: "center",
-        justifyContent: "flex-end",
-        padding: base * 0.06,
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: bottomOffset,
+        display: "flex",
+        justifyContent: "center",
+        paddingLeft: base * 0.06,
+        paddingRight: base * 0.06,
       }}
     >
       <div
@@ -211,6 +235,6 @@ const ExplanationPanel: React.FC<{
         <span style={{ fontFamily: fonts.display, fontWeight: 700 }}>💡 Giải thích: </span>
         {text}
       </div>
-    </AbsoluteFill>
+    </div>
   );
 };
