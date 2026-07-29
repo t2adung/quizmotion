@@ -12,7 +12,6 @@ import {
 import { Background } from "./Background";
 import { OptionCard } from "./OptionCard";
 import { CountdownRing } from "./CountdownRing";
-import { Logo } from "./Logo";
 import { theme, fonts } from "../lib/theme";
 import { phaseTiming } from "../lib/manifest";
 import type { OptionKey, QuizProps } from "../schema";
@@ -52,9 +51,13 @@ export const QuestionScene: React.FC<{
   // Question card entrance.
   const qPop = spring({ frame, fps, config: { damping: 13, stiffness: 110 } });
 
+  const bgImage = props.backgrounds.length
+    ? props.backgrounds[index % props.backgrounds.length]
+    : undefined;
+
   return (
     <AbsoluteFill>
-      <Background seed={index} />
+      <Background seed={index} imageSrc={bgImage} />
 
       {/* Audio narration */}
       {clip?.questionAudioSrc ? (
@@ -76,34 +79,24 @@ export const QuestionScene: React.FC<{
           gap: base * 0.035,
         }}
       >
-        {/* Header row: question number badge (left) + logo watermark (right) */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          {number != null ? (
-            <div
-              style={{
-                background: theme.colors.pink,
-                color: theme.colors.white,
-                fontFamily: fonts.display,
-                fontWeight: 700,
-                fontSize: base * 0.036,
-                padding: `${base * 0.012}px ${base * 0.035}px`,
-                borderRadius: 999,
-                boxShadow: theme.shadow,
-              }}
-            >
-              Câu {number}
-            </div>
-          ) : (
-            <span />
-          )}
-          <Logo size={base * 0.11} style={{ filter: "drop-shadow(0 6px 0 rgba(0,0,0,0.22))" }} />
-        </div>
+        {/* Question number badge */}
+        {number != null ? (
+          <div
+            style={{
+              alignSelf: "flex-start",
+              background: theme.colors.pink,
+              color: theme.colors.white,
+              fontFamily: fonts.display,
+              fontWeight: 700,
+              fontSize: base * 0.036,
+              padding: `${base * 0.012}px ${base * 0.035}px`,
+              borderRadius: 999,
+              boxShadow: theme.shadow,
+            }}
+          >
+            Câu {number}
+          </div>
+        ) : null}
 
         {/* Question card */}
         <div

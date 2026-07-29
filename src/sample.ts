@@ -76,4 +76,5 @@ export const sampleProps = (count: number): QuizProps => ({
   explanationSeconds: 4,
   title: "Quiz Time",
   subtitle: "Chủ đề 1 · Bài 1 — Thông tin và dữ liệu",
+  backgrounds: [],
 });

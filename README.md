@@ -73,6 +73,7 @@ Tham số:
 | `--tts` | bật lồng tiếng |
 | `--no-explanation` | (khi bật TTS) không đọc phần giải thích |
 | `--provider` | nhà cung cấp TTS (mặc định `google`) |
+| `--bg` | ảnh nền: `auto` (mặc định, ngẫu nhiên) \| `none` \| danh sách `"a.jpg,b.png"` |
 | `--csv` | đường dẫn CSV khác |
 | `--out` | đường dẫn file MP4 đầu ra |
 
@@ -84,6 +85,19 @@ npm run studio
 
 Mở giao diện, chọn `QuizShort` hoặc `QuizLandscape`, chỉnh props và xem trước tức thì
 (chế độ không audio để preview nhanh).
+
+## Ảnh nền tuỳ chọn 🖼️
+
+Mặc định nền được **vẽ bằng code** (pop-art tím/vàng động). Bạn có thể thay bằng
+ảnh của mình:
+
+1. Bỏ ảnh vào thư mục [`public/backgrounds/`](public/backgrounds/) (`.jpg`, `.png`,
+   `.webp`, `.svg`…). Kích thước khuyến nghị: Short `1080×1920`, ngang `1920×1080`.
+2. Chạy `npm run generate` — mỗi lần chạy sẽ **chọn/xáo trộn ngẫu nhiên** các ảnh
+   (video ngang: mỗi câu + intro/outro lấy một ảnh theo thứ tự đã xáo).
+
+Công cụ **không tự chèn logo** — bạn có thể gắn sẵn logo vào ảnh nền. Điều khiển
+qua cờ `--bg auto|none|"a.jpg,b.png"`. Thư mục trống → dùng nền pop-art mặc định.
 
 ## Lồng tiếng (TTS)
 
@@ -109,6 +123,7 @@ TTS được thiết kế **pluggable**. Để thêm giọng neural (vd Microsof
 ```
 data/multichoice.csv        Dữ liệu quiz
 public/fonts/               Font self-hosted (Vietnamese)
+public/backgrounds/         Ảnh nền tuỳ chọn của bạn (ngẫu nhiên mỗi lần gen)
 public/audio/               Audio TTS sinh ra (gitignored)
 src/
   schema.ts                 Kiểu dữ liệu + props (zod)

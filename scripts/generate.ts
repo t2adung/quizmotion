@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
@@ -33,7 +33,48 @@ type Options = {
   provider: string;
   readExplanation: boolean;
   out: string | null;
+  /** Background spec: "auto" (use folder, shuffled), "none", or comma list. */
+  bg: string;
 };
+
+const IMG_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".svg"]);
+
+/** List image files in public/backgrounds (basenames). */
+async function listBackgroundFiles(publicDir: string): Promise<string[]> {
+  try {
+    const files = await readdir(path.join(publicDir, "backgrounds"));
+    return files.filter((f) => IMG_EXT.has(path.extname(f).toLowerCase())).sort();
+  } catch {
+    return [];
+  }
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/**
+ * Resolve the background spec into shuffled staticFile-relative paths. Shuffled
+ * fresh on every call, so each generation randomly picks/orders backgrounds.
+ */
+async function resolveBackgrounds(spec: string, publicDir: string): Promise<string[]> {
+  if (spec === "none") return [];
+  const files = await listBackgroundFiles(publicDir);
+  if (files.length === 0) return [];
+
+  let chosen = files;
+  if (spec && spec !== "auto") {
+    const wanted = spec.split(",").map((s) => s.trim());
+    chosen = files.filter((f) => wanted.includes(f));
+    if (chosen.length === 0) chosen = files;
+  }
+  return shuffle(chosen).map((f) => `backgrounds/${f}`);
+}
 
 async function main() {
   const csvPath = argValue("csv") ?? path.join(ROOT, "data", "multichoice.csv");
@@ -57,6 +98,15 @@ async function main() {
       ? [filtered[Math.min(opts.questionIndex, filtered.length - 1)]]
       : filtered.slice(0, opts.limit);
 
+  const backgrounds = await resolveBackgrounds(opts.bg, path.join(ROOT, "public"));
+  if (backgrounds.length) {
+    console.log(
+      `🖼️  Background: ${backgrounds.length} ảnh (chọn ngẫu nhiên) — bắt đầu: ${backgrounds[0]}`,
+    );
+  } else if (opts.bg !== "none") {
+    console.log("🖼️  Không có ảnh trong public/backgrounds → dùng nền pop-art mặc định.");
+  }
+
   const label = topicLabel(opts.topic);
   const props: QuizProps = {
     questions: selected,
@@ -66,6 +116,7 @@ async function main() {
     explanationSeconds: 4,
     title: "Quiz Time",
     subtitle: label.full,
+    backgrounds,
   };
 
   // --- Optional TTS narration ---
@@ -160,6 +211,7 @@ function resolveFromFlags(all: Question[], csvPath: string): Options {
     provider: argValue("provider") ?? "google",
     readExplanation: !process.argv.includes("--no-explanation"),
     out: argValue("out"),
+    bg: argValue("bg") ?? "auto",
   };
 }
 
@@ -232,6 +284,17 @@ async function promptOptions(all: Question[], csvPath: string): Promise<Options>
     });
   }
 
+  // Background images (public/backgrounds). Randomly picked each run.
+  const bgFiles = await listBackgroundFiles(path.join(ROOT, "public"));
+  let bg = "none";
+  if (bgFiles.length > 0) {
+    const useBg = await confirm({
+      message: `Dùng ảnh nền của bạn (${bgFiles.length} ảnh trong public/backgrounds, chọn ngẫu nhiên)?`,
+      default: true,
+    });
+    bg = useBg ? "auto" : "none";
+  }
+
   return {
     csv: csvPath,
     format,
@@ -243,6 +306,7 @@ async function promptOptions(all: Question[], csvPath: string): Promise<Options>
     provider: "google",
     readExplanation,
     out: null,
+    bg,
   };
 }
 

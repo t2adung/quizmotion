@@ -48,6 +48,13 @@ export const QuizPropsSchema = z.object({
   title: z.string().default("Quiz Time"),
   /** Subtitle / topic label for the intro card. */
   subtitle: z.string().default(""),
+  /**
+   * Optional custom background images (staticFile-relative paths, e.g.
+   * "backgrounds/space.jpg"). When non-empty, scenes use these instead of the
+   * procedural pop-art background, cycling through the list by scene index.
+   * The CLI shuffles this list randomly on every run.
+   */
+  backgrounds: z.array(z.string()).default([]),
 });
 export type QuizProps = z.infer<typeof QuizPropsSchema>;
 

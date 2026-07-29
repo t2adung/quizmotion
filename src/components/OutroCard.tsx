@@ -1,11 +1,11 @@
 import React from "react";
 import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Background } from "./Background";
-import { Logo } from "./Logo";
 import { theme, fonts } from "../lib/theme";
 
-export const OutroCard: React.FC<{ message?: string }> = ({
+export const OutroCard: React.FC<{ message?: string; backgroundSrc?: string }> = ({
   message = "Cảm ơn đã xem!",
+  backgroundSrc,
 }) => {
   const frame = useCurrentFrame();
   const { fps, width } = useVideoConfig();
@@ -14,15 +14,8 @@ export const OutroCard: React.FC<{ message?: string }> = ({
 
   return (
     <AbsoluteFill>
-      <Background seed={3} />
+      <Background seed={3} imageSrc={backgroundSrc} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", gap: big * 0.5 }}>
-        <Logo
-          size={big * 1.5}
-          style={{
-            transform: `scale(${scale})`,
-            filter: "drop-shadow(0 10px 0 rgba(0,0,0,0.25))",
-          }}
-        />
         <div
           style={{
             transform: `scale(${scale})`,

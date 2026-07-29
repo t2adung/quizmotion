@@ -1,9 +1,42 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Img, staticFile, useCurrentFrame } from "remotion";
 import { theme } from "../lib/theme";
 
-/** Animated pop-art background: purple base, halftone dots, comic rays. */
-export const Background: React.FC<{ seed?: number }> = ({ seed = 0 }) => {
+/**
+ * Scene background. If `imageSrc` is given (a staticFile-relative path such as
+ * "backgrounds/space.jpg") the image is shown full-bleed with a subtle overlay
+ * for text legibility. Otherwise it falls back to the animated pop-art
+ * background: purple base, halftone dots, comic rays.
+ */
+export const Background: React.FC<{ seed?: number; imageSrc?: string }> = ({
+  seed = 0,
+  imageSrc,
+}) => {
+  if (imageSrc) {
+    return <ImageBackground imageSrc={imageSrc} />;
+  }
+  return <ProceduralBackground seed={seed} />;
+};
+
+const ImageBackground: React.FC<{ imageSrc: string }> = ({ imageSrc }) => {
+  return (
+    <AbsoluteFill style={{ background: theme.colors.purpleDeep }}>
+      <Img
+        src={staticFile(imageSrc)}
+        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+      />
+      {/* Soft top/bottom shading keeps white cards & text readable on any image. */}
+      <AbsoluteFill
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.32) 100%)",
+        }}
+      />
+    </AbsoluteFill>
+  );
+};
+
+const ProceduralBackground: React.FC<{ seed: number }> = ({ seed }) => {
   const frame = useCurrentFrame();
   const rot = (frame * 0.15 + seed * 30) % 360;
 
