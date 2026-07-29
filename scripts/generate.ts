@@ -155,6 +155,7 @@ async function main() {
   const props: QuizProps = {
     questions: selected,
     clips: [],
+    readSeconds: 3,
     countdownSeconds: 5,
     revealSeconds: 2.5,
     explanationSeconds: 4,

@@ -38,6 +38,8 @@ export type Clip = z.infer<typeof ClipSchema>;
 export const QuizPropsSchema = z.object({
   questions: z.array(QuestionSchema),
   clips: z.array(ClipSchema),
+  /** Seconds to read the question before the countdown (extended to fit TTS). */
+  readSeconds: z.number().min(1).max(30).default(3),
   /** Seconds the countdown timer runs before revealing the answer. */
   countdownSeconds: z.number().min(1).max(30).default(5),
   /** Seconds the answer stays highlighted before the explanation. */

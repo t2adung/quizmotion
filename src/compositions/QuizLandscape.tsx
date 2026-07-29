@@ -7,7 +7,7 @@ import { allQuestionsDuration, phaseTiming } from "../lib/manifest";
 import { FPS, type QuizProps } from "../schema";
 
 const INTRO_SECONDS = 3;
-const OUTRO_SECONDS = 3;
+const OUTRO_SECONDS = 4;
 
 /**
  * YouTube landscape format (16:9): intro → N questions → outro.

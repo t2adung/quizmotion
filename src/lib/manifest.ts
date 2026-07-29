@@ -31,9 +31,11 @@ export function phaseTiming(
 
   const pad = Math.round(0.6 * fps);
 
+  // Fixed read window (default 3s); extended only if TTS narration is longer.
+  const readBase = Math.round(props.readSeconds * fps);
   const readFrames = clip?.questionAudioFrames
-    ? clip.questionAudioFrames + pad
-    : estimateReadFrames(q.question, fps);
+    ? Math.max(readBase, clip.questionAudioFrames + pad)
+    : readBase;
 
   const countdownFrames = Math.round(props.countdownSeconds * fps);
   const revealFrames = Math.round(props.revealSeconds * fps);

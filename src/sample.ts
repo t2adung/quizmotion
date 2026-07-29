@@ -71,6 +71,7 @@ export const SAMPLE_QUESTIONS: Question[] = [
 export const sampleProps = (count: number): QuizProps => ({
   questions: SAMPLE_QUESTIONS.slice(0, count),
   clips: [],
+  readSeconds: 3,
   countdownSeconds: 5,
   revealSeconds: 2.5,
   explanationSeconds: 4,
