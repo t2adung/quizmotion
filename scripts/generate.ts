@@ -55,8 +55,22 @@ async function listImageFiles(publicDir: string, sub: string): Promise<string[]>
   }
 }
 
-const listBackgroundFiles = (publicDir: string) => listImageFiles(publicDir, "backgrounds");
 const listCoverFiles = (publicDir: string) => listImageFiles(publicDir, "covers");
+
+/**
+ * Backgrounds for a format: prefer public/backgrounds/<format>/ (e.g. portrait
+ * 9:16 images under short/, 16:9 under landscape/), falling back to the root
+ * public/backgrounds/ folder. Returns the files and the sub-path they live in.
+ */
+async function backgroundsFor(
+  publicDir: string,
+  format: Format,
+): Promise<{ files: string[]; sub: string }> {
+  const formatSub = `backgrounds/${format}`;
+  const formatFiles = await listImageFiles(publicDir, formatSub);
+  if (formatFiles.length > 0) return { files: formatFiles, sub: formatSub };
+  return { files: await listImageFiles(publicDir, "backgrounds"), sub: "backgrounds" };
+}
 
 /** Resolve a cover spec into a staticFile-relative path ("covers/x.png") or null. */
 function resolveCover(spec: string): string | null {
@@ -79,9 +93,13 @@ function shuffle<T>(arr: T[]): T[] {
  * Resolve the background spec into shuffled staticFile-relative paths. Shuffled
  * fresh on every call, so each generation randomly picks/orders backgrounds.
  */
-async function resolveBackgrounds(spec: string, publicDir: string): Promise<string[]> {
+async function resolveBackgrounds(
+  spec: string,
+  publicDir: string,
+  format: Format,
+): Promise<string[]> {
   if (spec === "none") return [];
-  const files = await listBackgroundFiles(publicDir);
+  const { files, sub } = await backgroundsFor(publicDir, format);
   if (files.length === 0) return [];
 
   let chosen = files;
@@ -90,7 +108,7 @@ async function resolveBackgrounds(spec: string, publicDir: string): Promise<stri
     chosen = files.filter((f) => wanted.includes(f));
     if (chosen.length === 0) chosen = files;
   }
-  return shuffle(chosen).map((f) => `backgrounds/${f}`);
+  return shuffle(chosen).map((f) => `${sub}/${f}`);
 }
 
 async function main() {
@@ -115,13 +133,19 @@ async function main() {
       ? [filtered[Math.min(opts.questionIndex, filtered.length - 1)]]
       : filtered.slice(0, opts.limit);
 
-  const backgrounds = await resolveBackgrounds(opts.bg, path.join(ROOT, "public"));
+  const backgrounds = await resolveBackgrounds(
+    opts.bg,
+    path.join(ROOT, "public"),
+    opts.format,
+  );
   if (backgrounds.length) {
     console.log(
-      `🖼️  Background: ${backgrounds.length} ảnh (chọn ngẫu nhiên) — bắt đầu: ${backgrounds[0]}`,
+      `🖼️  Background (${opts.format}): ${backgrounds.length} ảnh (ngẫu nhiên) — bắt đầu: ${backgrounds[0]}`,
     );
   } else if (opts.bg !== "none") {
-    console.log("🖼️  Không có ảnh trong public/backgrounds → dùng nền pop-art mặc định.");
+    console.log(
+      `🖼️  Không có ảnh cho '${opts.format}' (public/backgrounds/${opts.format}/ hoặc public/backgrounds/) → nền pop-art mặc định.`,
+    );
   }
 
   const label = topicLabel(opts.topic);
@@ -312,12 +336,12 @@ async function promptOptions(all: Question[], csvPath: string): Promise<Options>
     });
   }
 
-  // Background images (public/backgrounds). Randomly picked each run.
-  const bgFiles = await listBackgroundFiles(path.join(ROOT, "public"));
+  // Background images for this format (public/backgrounds/<format>/ or root).
+  const { files: bgFiles } = await backgroundsFor(path.join(ROOT, "public"), format);
   let bg = "none";
   if (bgFiles.length > 0) {
     const useBg = await confirm({
-      message: `Dùng ảnh nền của bạn (${bgFiles.length} ảnh trong public/backgrounds, chọn ngẫu nhiên)?`,
+      message: `Dùng ảnh nền cho '${format}' (${bgFiles.length} ảnh, chọn ngẫu nhiên)?`,
       default: true,
     });
     bg = useBg ? "auto" : "none";

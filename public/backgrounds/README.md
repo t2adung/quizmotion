@@ -1,16 +1,15 @@
 # Ảnh nền tuỳ chọn
 
-Đặt ảnh nền của bạn vào thư mục này (`.jpg`, `.png`, `.webp`, `.svg`…).
+Đặt ảnh nền của bạn vào thư mục con theo **định dạng**:
 
-- Mỗi lần chạy `npm run generate`, công cụ sẽ **chọn/xáo trộn ngẫu nhiên** các ảnh ở đây.
-- Với video ngang nhiều câu, mỗi câu (và intro/outro) lấy một ảnh theo thứ tự đã xáo.
-- Nếu thư mục trống → dùng nền pop-art mặc định (vẽ bằng code).
-- Kích thước khuyến nghị: Short/Reels `1080×1920`, YouTube ngang `1920×1080`.
-- Bạn có thể **gắn sẵn logo** vào ảnh nền (công cụ không tự chèn logo nữa).
+- `short/` — ảnh **dọc 9:16** (`1080×1920`) cho Short/Reels
+- `landscape/` — ảnh **ngang 16:9** (`1920×1080`) cho YouTube ngang
 
-Điều khiển qua cờ:
-- `--bg auto`  (mặc định) dùng tất cả ảnh, ngẫu nhiên
-- `--bg none`  bỏ qua ảnh, dùng nền pop-art
-- `--bg "a.jpg,b.png"`  chỉ dùng các ảnh chỉ định
+Ảnh để thẳng trong thư mục này (không trong `short/` hay `landscape/`) được dùng làm
+**dự phòng** khi thư mục định dạng tương ứng trống.
 
-`sample-background.svg` chỉ là ảnh mẫu — cứ xoá đi khi bạn thêm ảnh của mình.
+- Mỗi lần chạy `npm run generate`, công cụ **chọn/xáo trộn ngẫu nhiên** ảnh của định
+  dạng đang chọn. Thư mục trống → dùng nền pop-art mặc định (vẽ bằng code).
+- Bạn có thể **gắn sẵn logo** vào ảnh nền (công cụ không tự chèn logo).
+
+Điều khiển qua cờ: `--bg auto` (mặc định) | `--bg none` | `--bg "a.jpg,b.png"`.

@@ -95,10 +95,13 @@ Mở giao diện, chọn `QuizShort` hoặc `QuizLandscape`, chỉnh props và x
 Mặc định nền được **vẽ bằng code** (pop-art tím/vàng động). Bạn có thể thay bằng
 ảnh của mình:
 
-1. Bỏ ảnh vào thư mục [`public/backgrounds/`](public/backgrounds/) (`.jpg`, `.png`,
-   `.webp`, `.svg`…). Kích thước khuyến nghị: Short `1080×1920`, ngang `1920×1080`.
-2. Chạy `npm run generate` — mỗi lần chạy sẽ **chọn/xáo trộn ngẫu nhiên** các ảnh
-   (video ngang: mỗi câu + intro/outro lấy một ảnh theo thứ tự đã xáo).
+1. Bỏ ảnh theo **đúng định dạng**:
+   - `public/backgrounds/short/` — ảnh **dọc 9:16** (`1080×1920`) cho Short/Reels.
+   - `public/backgrounds/landscape/` — ảnh **ngang 16:9** (`1920×1080`) cho YouTube ngang.
+   - (Ảnh để thẳng trong `public/backgrounds/` được dùng làm dự phòng nếu thư mục
+     định dạng tương ứng trống.)
+2. Chạy `npm run generate` — công cụ tự lấy ảnh theo định dạng đang chọn và **xáo trộn
+   ngẫu nhiên** mỗi lần chạy (video nhiều slide: mỗi slide lấy một ảnh theo thứ tự đã xáo).
 
 Công cụ **không tự chèn logo** — bạn có thể gắn sẵn logo vào ảnh nền. Điều khiển
 qua cờ `--bg auto|none|"a.jpg,b.png"`. Thư mục trống → dùng nền pop-art mặc định.

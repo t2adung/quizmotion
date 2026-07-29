@@ -22,14 +22,16 @@ export const IntroCard: React.FC<{
   lesson?: string;
 }> = ({ title, subtitle, count, backgroundSrc, coverSrc, book, subject, lesson }) => {
   const frame = useCurrentFrame();
-  const { fps, width } = useVideoConfig();
+  const { fps, width, height } = useVideoConfig();
+  const portrait = height >= width;
   const scale = spring({ frame, fps, config: { damping: 11, stiffness: 100 } });
   const wobble = Math.sin(frame / 6) * 2;
   // Slightly smaller content + a ~5% safe-area margin on every side.
-  const big = width * 0.078;
+  const big = width * (portrait ? 0.082 : 0.078);
   const pad = width * 0.11;
-  const align = coverSrc ? "flex-start" : "center";
-  const textAlign = coverSrc ? "left" : "center";
+  // Portrait (Shorts) is always centered; landscape goes two-column with a cover.
+  const align = portrait || !coverSrc ? "center" : "flex-start";
+  const textAlign = portrait || !coverSrc ? "center" : "left";
 
   const fadeAt = (a: number, b: number) =>
     interpolate(frame, [a, b], [0, 1], {
@@ -108,7 +110,7 @@ export const IntroCard: React.FC<{
       <div
         style={{
           marginTop: big * 0.55,
-          alignSelf: coverSrc ? "flex-start" : "center",
+          alignSelf: align,
           opacity: interpolate(frame, [18, 32], [0, 1], {
             extrapolateLeft: "clamp",
             extrapolateRight: "clamp",
@@ -128,6 +130,47 @@ export const IntroCard: React.FC<{
     </div>
   );
 
+  // Portrait (Shorts): cover in the upper area, title block in the bottom ~1/4.
+  if (portrait) {
+    return (
+      <AbsoluteFill>
+        <Background imageSrc={backgroundSrc} />
+        {coverSrc ? (
+          <div
+            style={{
+              position: "absolute",
+              top: height * 0.08,
+              left: 0,
+              right: 0,
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <BookCover src={coverSrc} scale={scale} height={height * 0.42} />
+          </div>
+        ) : null}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            paddingBottom: height * 0.08,
+            paddingLeft: pad,
+            paddingRight: pad,
+          }}
+        >
+          {textBlock}
+        </div>
+      </AbsoluteFill>
+    );
+  }
+
+  // Landscape: centered, or two-column when a cover is present.
   return (
     <AbsoluteFill>
       <Background imageSrc={backgroundSrc} />
