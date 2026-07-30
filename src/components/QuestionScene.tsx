@@ -49,12 +49,13 @@ export const QuestionScene: React.FC<{
   const optFont = base * (portrait ? 0.035 : 0.04);
   const ringSize = base * (portrait ? 0.22 : 0.17);
 
-  // Layout zones: question + options live in the top ~2/3; the countdown and
-  // explanation live below without overlapping the content, and a safe strip at
-  // the very bottom is reserved for a logo baked into the background. Landscape
-  // needs a slightly taller content band because the 2×2 grid is wider.
-  const CONTENT_FRAC = portrait ? 2 / 3 : 0.72;
+  // Layout zones. Portrait (Shorts): the question starts ~1/4 down the frame
+  // with the options directly beneath it; the countdown and explanation sit in
+  // the lower band, above a bottom strip reserved for a logo baked into the bg.
+  // Landscape keeps a content band that fills the top ~72% (the 2×2 grid is
+  // wider) with the countdown centered below it.
   const logoSafe = height * (portrait ? 0.1 : 0.05);
+  const countdownTopPct = portrait ? 73 : 72;
 
   // Question card entrance.
   const qPop = spring({ frame, fps, config: { damping: 13, stiffness: 110 } });
@@ -79,18 +80,23 @@ export const QuestionScene: React.FC<{
         </Sequence>
       ) : null}
 
-      {/* Content zone: top 2/3 of the frame */}
+      {/* Content zone: question + options */}
       <div
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
-          height: `${CONTENT_FRAC * 100}%`,
-          padding: `${base * 0.07}px ${base * 0.08}px 0`,
+          // Portrait: start the question ~1/4 down, options directly below.
+          // Landscape: fill the top band and center the 2×2 grid within it.
+          ...(portrait
+            ? { paddingTop: height * 0.23 }
+            : { height: "72%", paddingTop: base * 0.07 }),
+          paddingLeft: base * 0.08,
+          paddingRight: base * 0.08,
           display: "flex",
           flexDirection: "column",
-          gap: base * 0.03,
+          gap: portrait ? base * 0.026 : base * 0.03,
         }}
       >
         {/* Question number badge */}
@@ -132,14 +138,13 @@ export const QuestionScene: React.FC<{
           {q.question}
         </div>
 
-        {/* Options */}
+        {/* Options — directly below the question (portrait) or centered (landscape) */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: portrait ? "1fr" : "1fr 1fr",
             gap: base * 0.028,
-            flex: 1,
-            alignContent: "center",
+            ...(portrait ? {} : { flex: 1, alignContent: "center" }),
           }}
         >
           {OPTION_KEYS.map((k, i) => (
@@ -156,14 +161,14 @@ export const QuestionScene: React.FC<{
         </div>
       </div>
 
-      {/* Countdown ring — centered in the bottom third, above the logo strip */}
+      {/* Countdown ring — in the lower band, above the logo strip */}
       <Sequence from={countdownStart} durationInFrames={t.countdownFrames}>
         <div
           style={{
             position: "absolute",
             left: 0,
             right: 0,
-            top: `${CONTENT_FRAC * 100}%`,
+            top: `${countdownTopPct}%`,
             bottom: logoSafe,
             display: "flex",
             alignItems: "center",

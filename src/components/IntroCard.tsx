@@ -130,42 +130,27 @@ export const IntroCard: React.FC<{
     </div>
   );
 
-  // Portrait (Shorts): cover in the upper area, title block in the bottom ~1/4.
+  // Portrait (Shorts): cover + title block, centered vertically (like the outro).
   if (portrait) {
     return (
       <AbsoluteFill>
         <Background imageSrc={backgroundSrc} />
-        {coverSrc ? (
-          <div
-            style={{
-              position: "absolute",
-              top: height * 0.08,
-              left: 0,
-              right: 0,
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <BookCover src={coverSrc} scale={scale} height={height * 0.42} />
-          </div>
-        ) : null}
-        <div
+        <AbsoluteFill
           style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "flex-end",
-            paddingBottom: height * 0.08,
+            justifyContent: "center",
+            gap: coverSrc ? height * 0.035 : 0,
             paddingLeft: pad,
             paddingRight: pad,
           }}
         >
+          {coverSrc ? (
+            <BookCover src={coverSrc} scale={scale} height={height * 0.32} />
+          ) : null}
           {textBlock}
-        </div>
+        </AbsoluteFill>
       </AbsoluteFill>
     );
   }
